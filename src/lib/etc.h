@@ -3,21 +3,62 @@ class vertex {
 public:
     float x = 0, y = 0, z = 0;
 
-    vertex(float x, float y, float z = 0) : x(x), y(y), z(z) {}
+    vertex(float x = 0, float y = 0, float z = 0) : x(x), y(y), z(z) {}
 
     vertex() {};
+
+    float at(int i) {
+        switch (i) {
+            case 0:
+                return x;
+            case 1:
+                return y;
+            case 2:
+                return z;
+        }
+    }
+
+    float setAt(int i, float val) {
+        switch (i) {
+            case 0:
+                return x = val;
+            case 1:
+                return y = val;
+            case 2:
+                return z = val;
+        }
+    }
 };
 
 class brick {
 public:
+
     float color[3] = {1, 1, 1};
     int health = 1;
     vertex position[2];
 
-    brick(float r, float g, float b) {
+    brick(float c[3], vertex p[2], int health = 1) : health(health) {
+        this->setColor(c[0], c[1], c[2]);
+        position[0] = p[0];
+        position[1] = p[1];
+    }
+
+
+    brick(float r, float g, float b) { this->setColor(r, g, b); }
+
+
+    void setColor(float r, float g, float b) {
         color[0] = r;
-        color[1] = 1;
+        color[1] = g;
         color[2] = b;
+    }
+
+    float getCenter(int i) {
+        return (position[0].at(i) + position[1].at(i)) / 2;
+    }
+
+    float getScale(int i) {
+        return position[1].at(i) - position[0].at(i);
     }
 
     brick() {};
@@ -45,11 +86,11 @@ public:
     brick setBrick(int x, int y, brick b) const {
         float xPos = -(BOARD_WIDTH / 2) + (BOARD_WIDTH / width * x);
         float yPos = (BOARD_HEIGHT / 2) - (STAGE_HEIGHT / height * y);
-        b.position[0] = vertex(xPos, yPos, -BOARD_DEPTH / 2);
+        b.position[0] = vertex(xPos, yPos - STAGE_HEIGHT / height, -BOARD_DEPTH / 2);
 
         b.position[1] = vertex(
                 xPos + BOARD_WIDTH / width,
-                yPos - STAGE_HEIGHT / height,
+                yPos,
                 BOARD_DEPTH / 2
         );
         return grid[y][x] = b;
