@@ -67,11 +67,7 @@ void drawBrick(brick b) {
     glPushMatrix();
     glTranslatev(b.getCenter());
     glScalef(b.getScale(0), b.getScale(1), b.getScale(2));
-    glutSolidCube(1);
-    // cube outline
-    glScalef(1, 1, 1.01);
-    setColor(0);
-    glutWireCube(1);
+    coolCube(1);
     glPopMatrix();
 }
 
@@ -94,7 +90,7 @@ void drawBar() {
     setColor(0.1, 0.8, 0.1);
     glTranslatef(barPosition, -BOARD_HEIGHT / 2 - BOARD_DEPTH / 2 + BOARD_DEPTH * 0.2, 0);
     glScalef(BAR_WIDTH, BOARD_DEPTH * 0.8, BOARD_DEPTH);
-    glutSolidCube(1);
+    coolCube(1);
     glPopMatrix();
 }
 
@@ -295,13 +291,16 @@ void fixPerspective() {
     glLoadIdentity();
 
     if (ORTHO) {
+        glDisable(GL_LIGHTING);
         // glOrtho(-orho, orho, -orho, orho, -200, 200);
         if (width <= height)
             glOrtho(-ortho, ortho, -ortho * h / w, ortho * h / w, -100, 100);
         else
             glOrtho(-ortho * w / h, ortho * w / h, -ortho, ortho, -100, 100);
-    } else
+    } else{
+        glEnable(GL_LIGHTING);
         gluPerspective(60, (GLfloat) w / (GLfloat) h, 0.01, 200);
+    }
 }
 
 // atualiza perspectiva

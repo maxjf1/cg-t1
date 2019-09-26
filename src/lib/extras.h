@@ -47,6 +47,7 @@ void setColorBase(void) {
 
 
 void setColor(float r, float g, float b) {
+    glColor3f(r, g, b);
     // Parametros comuns para os dois lados da superfície
     GLfloat objeto_especular[] = {0.626, 0.626, 0.626, 1.0};
     GLfloat objeto_brilho[] = {90.0f};

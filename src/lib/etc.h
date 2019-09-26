@@ -207,3 +207,10 @@ void glTranslatev(vertex v) {
 float gameRandom() {
     return 1.0 / (float) RAND_MAX * (float) rand();
 }
+
+
+void coolCube(float size){
+    glutSolidCube(size);
+    setColor(0);
+    glutWireCube(size*1.001);
+}
