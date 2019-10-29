@@ -1,11 +1,18 @@
-/// CONSTS
+/// CONSTS / CONFIGS
 const float FPS = 60;
 const float ANGLE_3D = 30;
-const float BOARD_WIDTH = 7;
+const float BOARD_WIDTH = 6;
 const float BOARD_HEIGHT = 4;
 const float BOARD_DEPTH = 0.2;
+const float BOARD_NOTCH_WIDTH = BOARD_HEIGHT / 2;
+const float BOARD_NOTCH_HEIGHT = BOARD_DEPTH / 2;
+
 const float STAGE_HEIGHT = BOARD_HEIGHT / 2;
-const float BAR_WIDTH = BOARD_WIDTH / 4;
+const float STAGE_OFFSET = BOARD_HEIGHT / 8;
+const float BAR_WIDTH = BOARD_WIDTH / 3;
+const float BAR_HEIGHT = BOARD_DEPTH * 0.8;
+const float BAR_SLICES = 20;
+int STAGE = 1;
 float BALL_RADIUS = 0.1;
 float VELOCITY = 0.7 / (BALL_RADIUS * 100);
 
@@ -17,7 +24,6 @@ float VELOCITY = 0.7 / (BALL_RADIUS * 100);
 #include <float.h>
 #include <iostream>
 
-#include "lib/extras.h"
 #include "lib/etc.h"
 
 using namespace std;
@@ -34,86 +40,14 @@ bool PAUSED = false;
 bool STARTED = false;
 bool FREECAM = false;
 bool ORTHO = false;
+int LIVES = 5;
 vertex ballPosition;
 vertex ballDirection;
 brickGrid stage;
 bool WIN = false;
 
-
-// Renderiza tabuleiro
-void drawBoard() {
-    glPushMatrix();
-    setColor(0.5);
-
-    // sides
-    for (int side = -1; side < 2; side+=2) {
-        glPushMatrix();
-        glTranslatef((BOARD_WIDTH / 2 + (BOARD_DEPTH / 2)) * side, -BOARD_HEIGHT / 2, 0);
-        glScalef(BOARD_DEPTH, BOARD_HEIGHT * 2, BOARD_DEPTH);
-        glutSolidCube(1);
-        glPopMatrix();
-    }
-
-    // top
-    glPushMatrix();
-    glTranslatef(0, BOARD_HEIGHT / 2 + (BOARD_DEPTH / 2), 0);
-    glScalef(BOARD_WIDTH + 2 * BOARD_DEPTH, BOARD_DEPTH, BOARD_DEPTH);
-    glutSolidCube(1);
-    glPopMatrix();
-}
-
-// renderiza tijolo
-void drawBrick(brick b) {
-    glPushMatrix();
-    glTranslatev(b.getCenter());
-    glScalef(b.getScale(0), b.getScale(1), b.getScale(2));
-    coolCube(1);
-    glPopMatrix();
-}
-
-// Renderiza a fase
-void drawStage() {
-    for (int i = 0; i < stage.getHeight(); ++i) {
-        for (int j = 0; j < stage.getWidth(); ++j) {
-            brick b = stage.grid[i][j];
-            if (!b.health) continue;
-            setColor(b.color[0], b.color[1], b.color[2]);
-            drawBrick(b);
-        }
-    }
-}
-
-// renderiza o rebatedor
-void drawBar() {
-    static GLUquadric *qobj = gluNewQuadric();
-    glPushMatrix();
-    setColor(0.1, 0.8, 0.1);
-    glTranslatef(barPosition, -BOARD_HEIGHT / 2 - BOARD_DEPTH / 2 + BOARD_DEPTH * 0.2, 0);
-    glScalef(BAR_WIDTH, BOARD_DEPTH * 0.8, BOARD_DEPTH);
-    coolCube(1);
-    glPopMatrix();
-}
-
-// Renderiza Bola
-void drawBall() {
-    glPushMatrix();
-    setColor(1, 1, 0);
-    glTranslatev(ballPosition);
-    glutSolidSphere(BALL_RADIUS, 100, 100);
-    glPopMatrix();
-}
-
-// renderiza indicador de direção
-void drawArrow() {
-    glPushMatrix();
-    setColor(1, 0, 0);
-    glTranslatev(ballPosition);
-    glRotatef(vertexAngle(ballDirection) - 90, 0, 0, 1);
-    glTranslatef(0, BALL_RADIUS * 1.2, 0);
-    glRotatef(-90, 1, 0, 0);
-    glutSolidCone(BALL_RADIUS / 2, BALL_RADIUS * 2, 100, 100);
-    glPopMatrix();
-}
+#include "lib/renders.h"
+#include "lib/state.h"
 
 
 void display(void) {
@@ -122,7 +56,7 @@ void display(void) {
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
-    gluLookAt(0, 0, 4.5, 0, 0, 0, 0, 1, 0);
+    gluLookAt(0, 0, 4.5, 0, -0.3, 0, 0, 1, 0);
 
     glRotatef(rotationY, 0.0, 1.0, 0.0);
     glRotatef(rotationX, 1.0, 0.0, 0.0);
@@ -133,6 +67,7 @@ void display(void) {
     drawStage();
     drawBar();
     drawBall();
+    drawLives();
     if (!STARTED)
         drawArrow();
 
@@ -143,33 +78,6 @@ void display(void) {
 
 // Gerenciamento de estado
 
-// Reseta bola
-void resetBall() {
-    ballPosition = vertex(barPosition, -BOARD_HEIGHT / 2 + (BALL_RADIUS * 1.1)); // arbitrary initial distance
-    ballDirection = rotateVertexAngle(vertex(0, 1), -30);
-    PAUSED = STARTED = FREECAM = false;
-}
-
-// reseta o jogo
-void resetState() {
-    barPosition = 0;
-    resetBall();
-    // cria fase padrão
-    stage = brickGrid(10, 6);
-    for (int i = 0; i < stage.getWidth(); ++i)
-        for (int j = 0; j < stage.getHeight(); ++j)
-            if (WIN ?
-                gameRandom() < 0.4 : // RANDOM STAGE
-                (j + i) % 2 == 0) // CHESS STAGE
-                continue;
-            else
-                stage.setBrick(i, j, brick(
-                        gameRandom(),
-                        gameRandom(),
-                        gameRandom()
-                ));
-
-}
 
 /// Atualiza estado da aplicação
 void updateState() {
@@ -240,31 +148,21 @@ void updateState() {
                 hasColision = true;
             }
 
-            if(hasColision)
+            if (hasColision)
                 b->hit();
         }
     }
 
     // verificação de vitória - fase 2
     if (hasColision && stage.isFinished()) {
-        WIN = true;
-        BALL_RADIUS = 0.3;
-        VELOCITY = 0.7 / (BALL_RADIUS * 100);
-        resetState();
+        STAGE++;
+        resetBall();
+        generateStage();
     }
 
-    // Colisão  com paredes
-    if (fabs(ballPosition.x) == xLimit)
-        ballDirection.x *= -1;
-    if (ballPosition.y == yLimit)
-        ballDirection.y *= -1;
-    // Colisão com rebatedor
-    if (ballPosition.y == -yLimit) {
-        if (ballPosition.x >= barPosition - BAR_WIDTH / 2 && ballPosition.x < barPosition + BAR_WIDTH / 2)
-            ballDirection.y *= -1;
-        else
-            resetBall();
-    }
+    handleBoardColision(xLimit, yLimit);
+
+    handleBarColision(-yLimit);
 
 }
 
@@ -297,7 +195,7 @@ void fixPerspective() {
             glOrtho(-ortho, ortho, -ortho * h / w, ortho * h / w, -100, 100);
         else
             glOrtho(-ortho * w / h, ortho * w / h, -ortho, ortho, -100, 100);
-    } else{
+    } else {
         glEnable(GL_LIGHTING);
         gluPerspective(60, (GLfloat) w / (GLfloat) h, 0.01, 200);
     }

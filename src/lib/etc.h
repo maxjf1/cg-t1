@@ -4,6 +4,7 @@ public:
     float x = 0, y = 0, z = 0;
 
     vertex(float x = 0, float y = 0, float z = 0) : x(x), y(y), z(z) {}
+
     // Coordenadas com numeros
     float at(int i) {
         switch (i) {
@@ -15,6 +16,7 @@ public:
                 return z;
         }
     }
+
     float setAt(int i, float val) {
         switch (i) {
             case 0:
@@ -39,7 +41,7 @@ public:
         position[1] = p[1];
     }
 
-    brick(float r, float g, float b) { this->setColor(r, g, b); }
+    brick(float r, float g, float b, int health = 1) : health(health) { this->setColor(r, g, b); }
 
     void setColor(float r, float g, float b) {
         color[0] = r;
@@ -102,7 +104,7 @@ public:
 
     brick setBrick(int x, int y, brick b) {
         float xPos = -(BOARD_WIDTH / 2) + (getBrickWidth() * x);
-        float yPos = (BOARD_HEIGHT / 2) - (getBrickHeight() * y);
+        float yPos = -STAGE_OFFSET + (BOARD_HEIGHT / 2) - (getBrickHeight() * y);
         b.position[0] = vertex(xPos, yPos - getBrickHeight(), -BOARD_DEPTH / 2);
 
         b.position[1] = vertex(
@@ -131,6 +133,34 @@ public:
 
 };
 
+void initLight(int width, int height) {
+    glEnable(GL_LIGHTING);
+    glEnable(GL_LIGHT0);
+    glEnable(GL_DEPTH_TEST);
+
+    GLfloat cor_luz[] = {1.0, 1.0, 1.0, 1.0};
+    GLfloat posicao_luz[] = {(float) width, (float) height, 1000.0, 1.0};
+
+    glLightfv(GL_LIGHT0, GL_AMBIENT, cor_luz);
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, cor_luz);
+    glLightfv(GL_LIGHT0, GL_SPECULAR, cor_luz);
+    glLightfv(GL_LIGHT0, GL_POSITION, posicao_luz);
+    glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+}
+
+void setColor(float r, float g, float b) {
+    glColor3f(r, g, b);
+
+    GLfloat objeto_especular[] = {0.626, 0.626, 0.626, 1.0};
+    GLfloat objeto_brilho[] = {90.0f};
+    GLfloat objeto_ambient[] = {0.1, 0.1, 0.1, 1.0};
+    GLfloat objeto_difusa[] = {r, g, b, 1.0};
+
+    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, objeto_ambient);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, objeto_difusa);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, objeto_especular);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, objeto_brilho);
+}
 
 /**
  * Corrige o alcance de um valor
@@ -143,6 +173,10 @@ float fixRange(float value, float min, float max, bool circular = false, bool ov
     else if (value < min)
         return circular ? max - (overflow ? value - min : 0) : min;
     return value;
+}
+
+int signal(float value) {
+    return value / fabs(value);
 }
 
 /// converte angulo em radiandos
@@ -160,9 +194,29 @@ float calcDistance(float aX, float aY, float bX, float bY) {
     return sqrt(pow(aX - bX, 2) + pow(aY - bY, 2));
 }
 
+float vertexMod(vertex v) {
+    return sqrt(
+            pow(v.x, 2) + pow(v.y, 2)
+    );
+}
+
+float vertexProduto(vertex a, vertex b) {
+    return a.x * b.x + a.y * b.y;
+}
+
+float vertexAngleDifference(vertex a, vertex b) {
+    float ang = angle(acos(
+            vertexProduto(a, b) /
+            vertexMod(a) * vertexMod(b)
+    ));
+
+    return ang;
+}
+
 /// converte vetor em angulo
 float vertexAngle(vertex v) {
     float a = angle(acos(v.x / sqrt(pow(v.x, 2) + pow(v.y, 2))));
+//    float a = angle(vertexAngleDifference(v, vertex(1, 0)));
 
     if (v.y < 0)
         a = 360 - a;
@@ -173,6 +227,7 @@ float vertexAngle(vertex v) {
 vertex moveVertex(vertex v, vertex movement) {
     return vertex(v.x + movement.x, v.y + movement.y, v.z + movement.z);
 }
+
 vertex moveVertex(vertex v, float movement) {
     return moveVertex(v, vertex(movement, movement, movement));
 }
@@ -203,14 +258,73 @@ void glTranslatev(vertex v) {
     glTranslatef(v.x, v.y, v.z);
 }
 
+void glNormalv(vertex v) {
+    glNormal3f(v.x, v.y, v.z);
+}
+
 /// gera numero aleatorio entre 0 e 1
 float gameRandom() {
     return 1.0 / (float) RAND_MAX * (float) rand();
 }
 
 
-void coolCube(float size){
+void coolCube(float size) {
     glutSolidCube(size);
     setColor(0);
-    glutWireCube(size*1.001);
+    glutWireCube(size * 1.001);
 }
+
+
+void maxSolidCurve(float width, float height, int slices, float depth = BOARD_DEPTH) {
+    float SLICE_RADIUS = 180.0 / slices;
+
+    vertex rotation(-1, 0), aux;
+    glPushMatrix();
+    glTranslatef(0, 0, -BOARD_DEPTH * 0.5);
+    glBegin(GL_QUAD_STRIP);
+    for (int i = 0; i < slices + 1; ++i) {
+        glNormalv(rotateVertexAngle(rotation, SLICE_RADIUS / 2));
+        glVertex3f(
+                width / 2 * rotation.x,
+                height * rotation.y,
+                0);
+
+        glVertex3f(
+                width / 2 * rotation.x,
+                height * rotation.y,
+                depth
+        );
+        rotation = rotateVertexAngle(rotation, -SLICE_RADIUS);
+    }
+    // backface
+    glNormal3f(0, -1, 0);
+    glVertex3f(-width / 2, 0, 0);
+    glVertex3f(-width / 2, 0, depth);
+    glEnd();
+
+    rotation = vertex(-1, 0);
+    for (int i = 0; i < slices; ++i) {
+        aux = rotateVertexAngle(rotation, -SLICE_RADIUS);
+        for (int j = 0; j < 2; ++j) {
+            glBegin(GL_QUAD_STRIP);
+            glNormal3f(0, 0, -1);
+            glVertex3f(width / 2 * rotation.x, 0, j * depth);
+
+            glVertex3f(
+                    width / 2 * rotation.x,
+                    height * rotation.y,
+                    j * depth);
+
+            glVertex3f(width / 2 * aux.x, 0, j * depth);
+            glVertex3f(
+                    width / 2 * aux.x,
+                    height * aux.y,
+                    j * depth);
+            glEnd();
+        }
+        rotation = aux;
+    }
+    glPopMatrix();
+}
+
+
