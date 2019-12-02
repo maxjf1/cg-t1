@@ -178,13 +178,13 @@ void init(void) {
 
     textureManager.SetNumberOfTextures(7);
     textureManager.SetWrappingMode(GL_REPEAT);
-    textureManager.CreateTexture("../assets/textures/skybox.png", TEX_SKYBOX);
-    textureManager.CreateTexture("../assets/textures/iron.png", TEX_BARSIDE);
-    textureManager.CreateTexture("../assets/textures/title.png", TEX_MENU);
-    textureManager.CreateTexture("../assets/textures/logo.png", TEX_LOGO);
-    textureManager.CreateTexture("../assets/textures/stage.png", TEX_STAGE);
-    textureManager.CreateTexture("../assets/textures/bar.png", TEX_BARFRONT);
-    textureManager.CreateTexture("../assets/textures/brick.png", TEX_BRICK);
+    textureManager.CreateTexture("./assets/textures/skybox.png", TEX_SKYBOX);
+    textureManager.CreateTexture("./assets/textures/iron.png", TEX_BARSIDE);
+    textureManager.CreateTexture("./assets/textures/title.png", TEX_MENU);
+    textureManager.CreateTexture("./assets/textures/logo.png", TEX_LOGO);
+    textureManager.CreateTexture("./assets/textures/stage.png", TEX_STAGE);
+    textureManager.CreateTexture("./assets/textures/bar.png", TEX_BARFRONT);
+    textureManager.CreateTexture("./assets/textures/brick.png", TEX_BRICK);
     textureManager.Disable();
 }
 
