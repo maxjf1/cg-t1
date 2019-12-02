@@ -23,4 +23,5 @@ const int
         TEX_MENU = 2,
         TEX_LOGO = 3,
         TEX_STAGE = 4,
-        TEX_BARFRONT = 5;
+        TEX_BARFRONT = 5,
+        TEX_BRICK = 6;

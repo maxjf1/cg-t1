@@ -57,6 +57,7 @@ void display(void) {
     drawSkybox();
 
     drawBoard();
+    setColor(1);
     drawStage();
     drawBar();
     drawBall();
@@ -183,7 +184,7 @@ void init(void) {
     textureManager.CreateTexture("../assets/textures/logo.png", TEX_LOGO);
     textureManager.CreateTexture("../assets/textures/stage.png", TEX_STAGE);
     textureManager.CreateTexture("../assets/textures/bar.png", TEX_BARFRONT);
-    textureManager.CreateTexture("../assets/models/Eye.png", 6);
+    textureManager.CreateTexture("../assets/textures/brick.png", TEX_BRICK);
     textureManager.Disable();
 }
 

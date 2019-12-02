@@ -139,9 +139,9 @@ class textureHandler {
 public:
     int TEX_ID = NULL;
     float multiplierS, multiplierT, offsetS, offsetT;
+
     textureHandler(int id = NULL, float multiplierS = 1, float multiplierT = 1, float offsetS = 0, float offsetT = 0) :
-            TEX_ID(id), offsetS(offsetS), offsetT(offsetT), multiplierS(multiplierS), multiplierT(multiplierT) {
-    }
+            TEX_ID(id), multiplierS(multiplierS), multiplierT(multiplierT), offsetS(offsetS), offsetT(offsetT) {}
 
     void bind() {
         if (TEX_ID != NULL)

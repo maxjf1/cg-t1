@@ -98,23 +98,24 @@ void drawBoard() {
     for (int side = -1; side < 2; side += 2) {
         glPushMatrix();
         glTranslatef((BOARD_WIDTH / 2 + (BOARD_DEPTH / 2)) * side, -BOARD_HEIGHT / 2, 0);
-        glScalef(BOARD_DEPTH, BOARD_HEIGHT * 2, BOARD_DEPTH);
-        glutSolidCube(1);
+        texCube(vertex(BOARD_DEPTH, BOARD_HEIGHT * 2, BOARD_DEPTH),
+                textureHandler(TEX_STAGE, 0.3, 12));
         glPopMatrix();
 
         // Board Curves
         glPushMatrix();
         glTranslatef(side * BOARD_WIDTH / 2, 0, 0);
         glRotatef(side * 90, 0, 0, 1);
-        maxSolidCurve(BOARD_NOTCH_WIDTH, BOARD_NOTCH_HEIGHT, 15, BOARD_DEPTH, textureHandler(TEX_BARFRONT));
+        maxSolidCurve(BOARD_NOTCH_WIDTH, BOARD_NOTCH_HEIGHT, 15, BOARD_DEPTH,
+                      textureHandler(TEX_BARFRONT), textureHandler(TEX_STAGE, 3.5, 0.14, 0.26, 0.09));
         glPopMatrix();
     }
 
     // top
     glPushMatrix();
     glTranslatef(0, BOARD_HEIGHT / 2 + (BOARD_DEPTH / 2), 0);
-    glScalef(BOARD_WIDTH + 2 * BOARD_DEPTH, BOARD_DEPTH, BOARD_DEPTH);
-    glutSolidCube(1);
+    texCube(vertex(BOARD_WIDTH + 2 * BOARD_DEPTH, BOARD_DEPTH, BOARD_DEPTH),
+            textureHandler(TEX_STAGE, 10, 0.3));
     glPopMatrix();
 
     // top holes
@@ -132,8 +133,10 @@ void drawBoard() {
 void drawBrick(brick b) {
     glPushMatrix();
     glTranslatev(b.getCenter());
-    glScalef(b.getScale(0), b.getScale(1), b.getScale(2) * 1.1);
-    coolCube(1);
+    texCube(vertex(b.getScale(0), b.getScale(1), b.getScale(2) * 1.1),
+            textureHandler(TEX_BRICK, 2));
+//    glScalef(b.getScale(0), b.getScale(1), b.getScale(2) * 1.1);
+//    coolCube(1);
     glPopMatrix();
 }
 

@@ -4,6 +4,90 @@ void coolCube(float size) {
     glutWireCube(size * 1.001);
 }
 
+void texCube(vertex begin, vertex end, textureHandler tex = textureHandler()) {
+    tex.bind();
+    /// sides
+    glBegin(GL_TRIANGLE_FAN);
+    glNormal3f(0, 0, -1);
+    tex.texCoord(0, 0);
+    glVertex3f(end.x, begin.y, begin.z);
+    tex.texCoord(1, 0);
+    glVertex3f(begin.x, begin.y, begin.z);
+    tex.texCoord(1, 1);
+    glVertex3f(begin.x, end.y, begin.z);
+    tex.texCoord(0, 1);
+    glVertex3f(end.x, end.y, begin.z);
+    glEnd();
+
+    glBegin(GL_TRIANGLE_FAN);
+    glNormal3f(1, 0, 0);
+    tex.texCoord(0, 0);
+    glVertex3f(end.x, begin.y, end.z);
+    tex.texCoord(1, 0);
+    glVertex3f(end.x, begin.y, begin.z);
+    tex.texCoord(1, 1);
+    glVertex3f(end.x, end.y, begin.z);
+    tex.texCoord(0, 1);
+    glVertex3f(end.x, end.y, end.z);
+    glEnd();
+
+    glBegin(GL_TRIANGLE_FAN);
+    glNormal3f(0, 0, 1);
+    tex.texCoord(0, 0);
+    glVertex3f(begin.x, begin.y, end.z);
+    tex.texCoord(1, 0);
+    glVertex3f(end.x, begin.y, end.z);
+    tex.texCoord(1, 1);
+    glVertex3f(end.x, end.y, end.z);
+    tex.texCoord(0, 1);
+    glVertex3f(begin.x, end.y, end.z);
+    glEnd();
+
+    glBegin(GL_TRIANGLE_FAN);
+    glNormal3f(-1, 0, 0);
+    tex.texCoord(0, 0);
+    glVertex3f(begin.x, begin.y, begin.z);
+    tex.texCoord(1, 0);
+    glVertex3f(begin.x, begin.y, end.z);
+    tex.texCoord(1, 1);
+    glVertex3f(begin.x, end.y, end.z);
+    tex.texCoord(0, 1);
+    glVertex3f(begin.x, end.y, begin.z);
+    glEnd();
+    /// top
+    glBegin(GL_TRIANGLE_FAN);
+    glNormal3f(0, 1, 0);
+    tex.texCoord(0, 0);
+    glVertex3f(end.x, end.y, begin.z);
+    tex.texCoord(1, 0);
+    glVertex3f(begin.x, end.y, begin.z);
+    tex.texCoord(1, 1);
+    glVertex3f(begin.x, end.y, end.z);
+    tex.texCoord(0, 1);
+    glVertex3f(end.x, end.y, end.z);
+    glEnd();
+    /// bottom
+    glBegin(GL_TRIANGLE_FAN);
+    glNormal3f(0, 1, 0);
+    tex.texCoord(0, 0);
+    glVertex3f(begin.x, begin.y, end.z);
+    tex.texCoord(1, 0);
+    glVertex3f(end.x, begin.y, end.z);
+    tex.texCoord(1, 1);
+    glVertex3f(end.x, begin.y, begin.z);
+    tex.texCoord(0, 1);
+    glVertex3f(begin.x, begin.y, begin.z);
+    glEnd();
+    tex.disable();
+}
+
+void texCube(vertex sizes, textureHandler tex = textureHandler()) {
+    glPushMatrix();
+    glTranslatef(-sizes.x / 2, -sizes.y / 2, -sizes.z / 2);
+    texCube(vertex(0, 0, 0), sizes, tex);
+    glPopMatrix();
+}
+
 void maxSolidCurve(float width, float height, int slices, float depth = BOARD_DEPTH,
                    textureHandler frontTex = textureHandler(), textureHandler sideTex = textureHandler()) {
     float SLICE_RADIUS = 180.0 / slices;
