@@ -13,9 +13,6 @@ using namespace std;
 #include "lib/structs.h"
 #include "lib/etc.h"
 
-
-
-
 /// SETTINGS
 int width, height;
 int fullscreen[] = {0, 0, 0};
@@ -177,7 +174,8 @@ void init(void) {
     glEnable(GL_NORMALIZE);
     initLight(width, height); // Função extra para tratar iluminação.
     setPerspective();
-    textureManager.SetNumberOfTextures(6);
+
+    textureManager.SetNumberOfTextures(7);
     textureManager.SetWrappingMode(GL_REPEAT);
     textureManager.CreateTexture("../assets/textures/skybox.png", TEX_SKYBOX);
     textureManager.CreateTexture("../assets/textures/iron.png", TEX_BARSIDE);
@@ -185,6 +183,7 @@ void init(void) {
     textureManager.CreateTexture("../assets/textures/logo.png", TEX_LOGO);
     textureManager.CreateTexture("../assets/textures/stage.png", TEX_STAGE);
     textureManager.CreateTexture("../assets/textures/bar.png", TEX_BARFRONT);
+    textureManager.CreateTexture("../assets/models/Eye.png", 6);
     textureManager.Disable();
 }
 

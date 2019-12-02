@@ -19,6 +19,8 @@ void menuDisplay() {
     drawTexture(TEX_MENU);
     glPopMatrix();
 
+    setColor(1);
+
     glRotatef(menuShake.x, 1.0, 0.0, 0.0);
     glRotatef(menuShake.y, 0.0, 1.0, 0.0);
     drawSkybox();

@@ -106,7 +106,7 @@ void drawBoard() {
         glPushMatrix();
         glTranslatef(side * BOARD_WIDTH / 2, 0, 0);
         glRotatef(side * 90, 0, 0, 1);
-        maxSolidCurve(BOARD_NOTCH_WIDTH, BOARD_NOTCH_HEIGHT, 15, BOARD_DEPTH);
+        maxSolidCurve(BOARD_NOTCH_WIDTH, BOARD_NOTCH_HEIGHT, 15, BOARD_DEPTH, textureHandler(TEX_BARFRONT));
         glPopMatrix();
     }
 

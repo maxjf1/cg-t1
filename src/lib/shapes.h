@@ -4,7 +4,6 @@ void coolCube(float size) {
     glutWireCube(size * 1.001);
 }
 
-
 void maxSolidCurve(float width, float height, int slices, float depth = BOARD_DEPTH,
                    textureHandler frontTex = textureHandler(), textureHandler sideTex = textureHandler()) {
     float SLICE_RADIUS = 180.0 / slices;
