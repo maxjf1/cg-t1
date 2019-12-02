@@ -66,7 +66,6 @@ void generateStage() {
     }
 }
 
-
 // reseta o jogo
 void resetState() {
     LIVES = 5;
@@ -78,13 +77,14 @@ void resetState() {
 
 }
 
-
 void fail() {
     LIVES--;
     if (LIVES > 0)
         resetBall();
-    else
+    else {
         resetState();
+        menuSetup();
+    }
 }
 
 // Colisão com rebatedor

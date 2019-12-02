@@ -1,20 +1,4 @@
-/// CONSTS / CONFIGS
-const float FPS = 60;
-const float ANGLE_3D = 30;
-const float BOARD_WIDTH = 6;
-const float BOARD_HEIGHT = 4;
-const float BOARD_DEPTH = 0.2;
-const float BOARD_NOTCH_WIDTH = BOARD_HEIGHT / 2;
-const float BOARD_NOTCH_HEIGHT = BOARD_DEPTH / 2;
-
-const float STAGE_HEIGHT = BOARD_HEIGHT / 2;
-const float STAGE_OFFSET = BOARD_HEIGHT / 8;
-const float BAR_WIDTH = BOARD_WIDTH / 3;
-const float BAR_HEIGHT = BOARD_DEPTH * 0.8;
-const float BAR_SLICES = 20;
-int STAGE = 1;
-float BALL_RADIUS = 0.1;
-float VELOCITY = 0.7 / (BALL_RADIUS * 100);
+#include "configs.h"
 
 #include <GL/glut.h>
 #include <stdlib.h>
@@ -23,10 +7,13 @@ float VELOCITY = 0.7 / (BALL_RADIUS * 100);
 #include <math.h>
 #include <float.h>
 #include <iostream>
+using namespace std;
 
+#include "lib/glctexture.cpp"
+#include "lib/structs.h"
 #include "lib/etc.h"
 
-using namespace std;
+
 
 
 /// SETTINGS
@@ -46,8 +33,15 @@ vertex ballDirection;
 brickGrid stage;
 bool WIN = false;
 
-#include "lib/renders.h"
+
+void setup();
+void menuSetup();
+
 #include "lib/state.h"
+#include "lib/cam.h"
+#include "lib/input.h"
+#include "lib/renders.h"
+#include "lib/menu.h"
 
 
 void display(void) {
@@ -62,6 +56,8 @@ void display(void) {
     glRotatef(rotationX, 1.0, 0.0, 0.0);
 
     glPushMatrix();
+
+    drawSkybox();
 
     drawBoard();
     drawStage();
@@ -80,7 +76,7 @@ void display(void) {
 
 
 /// Atualiza estado da aplicação
-void updateState() {
+void updateState(float frameTime) {
     if (FREECAM || PAUSED || !STARTED) return;
 
     const float xLimit = BOARD_WIDTH / 2 - BALL_RADIUS,
@@ -88,8 +84,8 @@ void updateState() {
             BALL_HITBOX = BALL_RADIUS * 0.5;
 
     // movimento da bola
-    ballPosition.x = fixRange(ballPosition.x + VELOCITY * ballDirection.x, -xLimit, xLimit);
-    ballPosition.y = fixRange(ballPosition.y + VELOCITY * ballDirection.y, -yLimit, yLimit);
+    ballPosition.x = fixRange(ballPosition.x + VELOCITY * (frameTime * 1000 / 17) * ballDirection.x, -xLimit, xLimit);
+    ballPosition.y = fixRange(ballPosition.y + VELOCITY * (frameTime * 1000 / 17) * ballDirection.y, -yLimit, yLimit);
 
     bool hasColision = false;
     // loop dos tijolos
@@ -166,48 +162,6 @@ void updateState() {
 
 }
 
-// fullscreen handle
-void specialKeyboard(int key, int x, int y) {
-    if (key != GLUT_KEY_F12) return;
-
-    if (fullscreen[0])
-        glutReshapeWindow(fullscreen[1], fullscreen[2]);
-    else {
-        fullscreen[1] = width;
-        fullscreen[2] = height;
-        glutFullScreen();
-    }
-    fullscreen[0] = (fullscreen[0] + 1) % 2;
-}
-
-// Corrige perspectiva
-void fixPerspective() {
-    int w = width, h = height;
-    const float ortho = 2.54;
-
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-
-    if (ORTHO) {
-        glDisable(GL_LIGHTING);
-        // glOrtho(-orho, orho, -orho, orho, -200, 200);
-        if (width <= height)
-            glOrtho(-ortho, ortho, -ortho * h / w, ortho * h / w, -100, 100);
-        else
-            glOrtho(-ortho * w / h, ortho * w / h, -ortho, ortho, -100, 100);
-    } else {
-        glEnable(GL_LIGHTING);
-        gluPerspective(60, (GLfloat) w / (GLfloat) h, 0.01, 200);
-    }
-}
-
-// atualiza perspectiva
-void setPerspective(bool ortho = ORTHO) {
-    ORTHO = ortho;
-    rotationY = 0;
-    rotationX = ORTHO ? 0 : -ANGLE_3D;
-    fixPerspective();
-}
 
 /// Functions
 // proporção
@@ -223,92 +177,35 @@ void init(void) {
     glEnable(GL_NORMALIZE);
     initLight(width, height); // Função extra para tratar iluminação.
     setPerspective();
+    textureManager.SetNumberOfTextures(6);
+    textureManager.SetWrappingMode(GL_REPEAT);
+    textureManager.CreateTexture("../assets/textures/skybox.png", TEX_SKYBOX);
+    textureManager.CreateTexture("../assets/textures/iron.png", TEX_BARSIDE);
+    textureManager.CreateTexture("../assets/textures/title.png", TEX_MENU);
+    textureManager.CreateTexture("../assets/textures/logo.png", TEX_LOGO);
+    textureManager.CreateTexture("../assets/textures/stage.png", TEX_STAGE);
+    textureManager.CreateTexture("../assets/textures/bar.png", TEX_BARFRONT);
+    textureManager.Disable();
 }
 
 void idle() {
-    float t, frameTime;
-    static float tLast = 0.0;
-    // Get elapsed time
-    t = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
-    // Calculate frame time
-    frameTime = t - tLast;
+    float frameTime = shouldRenderFrame();
+    if (!frameTime) return;
 
-    // Check if the desired frame time was achieved. If not, skip animation.
-    if (frameTime <= 1.0 / FPS)
-        return;
-
-    tLast = t;
-
-    updateState();
+    updateState(frameTime);
     glutPostRedisplay();
 }
 
-// move mouse para centro
-void resetMouse() {
-    glutWarpPointer(width / 2, height / 2);
-    glutSetCursor(GLUT_CURSOR_NONE);
+void setup() {
+    glutDisplayFunc(display);
+    glutMouseFunc(mouseScroll);
+    glutMotionFunc(mouseMotion);
+    glutPassiveMotionFunc(mouseMotion);
+    glutKeyboardFunc(keyboard);
+    glutSpecialFunc(specialKeyboard);
+    glutIdleFunc(idle);
 }
 
-// movimenta rebatedor
-void mouseMotion(int x, int _) {
-    if (PAUSED) return;
-    float motion = (x - width / 2) * 0.005;
-    if (!motion) return;
-
-    barPosition = fixRange(barPosition + motion, -BOARD_WIDTH / 2 + BAR_WIDTH / 2, BOARD_WIDTH / 2 - BAR_WIDTH / 2);
-    if (!STARTED)
-        ballPosition.x = barPosition;
-    resetMouse();
-}
-
-// movimenta câmera
-void camMotion(int x, int y) {
-    if (ORTHO) return;
-    x = x - width / 2;
-    y = y - height / 2;
-    if (!x && !y) return;
-
-    rotationX += y;
-    rotationY += x;
-
-    resetMouse();
-}
-
-// movimenta direção
-void mouseScroll(int button, int _, int __, int ___) {
-    if (button == GLUT_LEFT_BUTTON) {
-        STARTED = true;
-    } else if (!STARTED && (button == 3 || button == 4)) {
-        int direction = -1 * (((button - 3) * 2) - 1);
-
-        ballDirection = rotateVertexAngle(ballDirection, 1 * direction);
-    }
-}
-
-/// Entradas do teclado
-void keyboard(unsigned char key, int x = 0, int y = 0) {
-    switch (tolower(key)) {
-        case 'p':
-            if (!FREECAM)
-                setPerspective(!ORTHO);
-            break;
-        case 'c':
-            if (ORTHO) break;
-            FREECAM = !FREECAM;
-            glutMotionFunc(FREECAM ? camMotion : mouseMotion);
-            glutPassiveMotionFunc(FREECAM ? camMotion : mouseMotion);
-            setPerspective();
-            break;
-        case ' ':
-            PAUSED = !FREECAM && STARTED && !PAUSED;
-            break;
-        case 'r':
-            resetState();
-            break;
-        case 27:
-            exit(0);
-    }
-}
 
 int main(int argc, char **argv) {
     resetState();
@@ -318,14 +215,9 @@ int main(int argc, char **argv) {
     glutInitWindowPosition(100, 100);
     glutCreateWindow(argv[0]);
     init();
-    glutDisplayFunc(display);
     glutReshapeFunc(reshape);
-    glutMouseFunc(mouseScroll);
-    glutMotionFunc(mouseMotion);
-    glutPassiveMotionFunc(mouseMotion);
-    glutKeyboardFunc(keyboard);
-    glutSpecialFunc(specialKeyboard);
-    glutIdleFunc(idle);
+
+    menuSetup();
     glutMainLoop();
     fixPerspective();
     return 0;

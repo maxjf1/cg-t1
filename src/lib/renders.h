@@ -1,6 +1,97 @@
+#include "shapes.h"
+
+void drawSkybox() {
+    const float bSize = 100.1;
+
+    glPushMatrix();
+    glDisable(GL_LIGHTING);
+    setColor(1);
+    textureManager.Bind(TEX_SKYBOX);
+
+    if (ORTHO) {
+        float slice = 1.0 / 3;
+        float w = (float) width / 100, h = (float) height / 200;
+        glBegin(GL_TRIANGLE_FAN);
+
+        glNormal3f(0, 0, 1);
+
+        glTexCoord2f(0.1, slice);
+        glVertex3f(-w, -h, 0);
+
+        glTexCoord2f(0.9, slice);
+        glVertex3f(w, -h, 0);
+
+        glTexCoord2f(0.9, slice * 2);
+        glVertex3f(w, h, 0);
+
+        glTexCoord2f(0.1, slice * 2);
+        glVertex3f(-w, h, 0);
+
+        glEnd();
+
+        textureManager.Disable();
+        glPopMatrix();
+        return;
+    }
+
+    glRotatef(90, 1, 0, 0);
+    glTranslatef(0, 0, -bSize);
+
+    // front and back
+    for (int j = 0; j < 2; ++j) {
+        glBegin(GL_TRIANGLE_FAN);
+
+        glNormal3f(0, 0, 1);
+
+        glTexCoord2f(0.25, 2.0 / 3 - j * 2.0 / 3);
+        glVertex3f(-bSize, -bSize, 0);
+
+        glTexCoord2f(0.50, 2.0 / 3 - j * 2.0 / 3);
+        glVertex3f(bSize, -bSize, 0);
+
+        glTexCoord2f(0.50, 1.0 - j * 2.0 / 3);
+        glVertex3f(bSize, bSize, 0);
+
+        glTexCoord2f(0.25, 1.0 - j * 2.0 / 3);
+        glVertex3f(-bSize, bSize, 0);
+
+        glEnd();
+
+        glTranslatef(0, 0, bSize);
+        glRotatef(180 - 90 * j, 1, 0, 0);
+        glTranslatef(0, 0, -bSize);
+    }
+
+    // 4 lateral faces
+    for (int i = 0; i < 4; ++i) {
+        float ti = ((i + 3 - i * 2) + 1) % 4;
+        glTranslatef(-bSize, 0, bSize);
+        glRotatef(90, 0, 1, 0);
+        glBegin(GL_TRIANGLE_FAN);
+
+        glNormal3f(0, 0, 1);
+
+        glTexCoord2f(1.0 / 4 * ti, 1.0 / 3);
+        glVertex3f(-bSize, -bSize, 0);
+
+        glTexCoord2f(1.0 / 4 * (ti + 1), 1.0 / 3);
+        glVertex3f(bSize, -bSize, 0);
+
+        glTexCoord2f(1.0 / 4 * (ti + 1), 2.0 / 3);
+        glVertex3f(bSize, bSize, 0);
+
+        glTexCoord2f(1.0 / 4 * ti, 2.0 / 3);
+        glVertex3f(-bSize, bSize, 0);
+
+        glEnd();
+    }
+    glEnable(GL_LIGHTING);
+    textureManager.Disable();
+    glPopMatrix();
+}
+
 // Renderiza tabuleiro
 void drawBoard() {
-    glPushMatrix();
     setColor(0.5);
 
     // sides
@@ -37,7 +128,6 @@ void drawBoard() {
     }
 }
 
-
 // renderiza tijolo
 void drawBrick(brick b) {
     glPushMatrix();
@@ -46,7 +136,6 @@ void drawBrick(brick b) {
     coolCube(1);
     glPopMatrix();
 }
-
 
 // Renderiza a fase
 void drawStage() {
@@ -60,23 +149,14 @@ void drawStage() {
     }
 }
 
-
 // renderiza o rebatedor
 void drawBar() {
     glPushMatrix();
-    glTranslatef(barPosition, -BOARD_HEIGHT / 2 + BOARD_DEPTH * 0.5 - BAR_HEIGHT - BALL_RADIUS, 0);
-    setColor(0.1, 0.8, 0.1);
-    maxSolidCurve(BAR_WIDTH, BAR_HEIGHT, BAR_SLICES, BOARD_DEPTH);
-    glPopMatrix();
-}
 
-/** @deprecated */
-void drawBar(int x) {
-    glPushMatrix();
-    setColor(0.1, 0.8, 0.1);
-    glTranslatef(barPosition, -BOARD_HEIGHT / 2 - BOARD_DEPTH / 2 + BOARD_DEPTH * 0.2, 0);
-    glScalef(BAR_WIDTH, BAR_HEIGHT * 0.8, BOARD_DEPTH);
-    coolCube(1);
+    glTranslatef(barPosition, -BOARD_HEIGHT / 2 + BOARD_DEPTH * 0.5 - BAR_HEIGHT - BALL_RADIUS, 0);
+    setColor(1);
+    maxSolidCurve(BAR_WIDTH, BAR_HEIGHT, BAR_SLICES, BOARD_DEPTH, textureHandler(TEX_BARFRONT), textureHandler(TEX_BARSIDE, 1.5));
+    textureManager.Disable();
     glPopMatrix();
 }
 

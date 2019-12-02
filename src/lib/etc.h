@@ -1,138 +1,3 @@
-// Vertex class
-class vertex {
-public:
-    float x = 0, y = 0, z = 0;
-
-    vertex(float x = 0, float y = 0, float z = 0) : x(x), y(y), z(z) {}
-
-    // Coordenadas com numeros
-    float at(int i) {
-        switch (i) {
-            case 0:
-                return x;
-            case 1:
-                return y;
-            case 2:
-                return z;
-        }
-    }
-
-    float setAt(int i, float val) {
-        switch (i) {
-            case 0:
-                return x = val;
-            case 1:
-                return y = val;
-            case 2:
-                return z = val;
-        }
-    }
-};
-
-class brick {
-public:
-    float color[3] = {1, 1, 1}; // RGB
-    int health = 1; // VIDA: 0 esta morto
-    vertex position[2];
-
-    brick(float c[3], vertex p[2], int health = 1) : health(health) {
-        this->setColor(c[0], c[1], c[2]);
-        position[0] = p[0];
-        position[1] = p[1];
-    }
-
-    brick(float r, float g, float b, int health = 1) : health(health) { this->setColor(r, g, b); }
-
-    void setColor(float r, float g, float b) {
-        color[0] = r;
-        color[1] = g;
-        color[2] = b;
-    }
-
-    // reduz vida tijolo
-    void hit(int damage = 1) {
-        health = health -= damage;
-        if (health < 0) health = 0;
-    }
-
-    // obtém centro do tijolo
-    vertex getCenter() {
-        return vertex(
-                (position[0].x + position[1].x) / 2,
-                (position[0].y + position[1].y) / 2,
-                (position[0].z + position[1].z) / 2
-        );
-    }
-
-    float getScale(int i) {
-        return position[1].at(i) - position[0].at(i);
-    }
-
-    brick(int health) : health(health) {}
-
-    brick() {};
-};
-
-class brickGrid {
-    int width = 0, height = 0;
-
-public:
-    brick **grid = NULL;
-
-    brickGrid(int w, int h) {
-        width = w;
-        height = h;
-
-        grid = new brick *[height];
-        for (int i = 0; i < height; ++i) {
-            grid[i] = new brick[width];
-            for (int j = 0; j < width; ++j)
-                grid[i][j] = brick(0);
-        }
-
-    }
-
-    brickGrid() {}
-
-    float getBrickWidth() {
-        return BOARD_WIDTH / width;
-    }
-
-    float getBrickHeight() {
-        return STAGE_HEIGHT / height;
-    }
-
-    brick setBrick(int x, int y, brick b) {
-        float xPos = -(BOARD_WIDTH / 2) + (getBrickWidth() * x);
-        float yPos = -STAGE_OFFSET + (BOARD_HEIGHT / 2) - (getBrickHeight() * y);
-        b.position[0] = vertex(xPos, yPos - getBrickHeight(), -BOARD_DEPTH / 2);
-
-        b.position[1] = vertex(
-                xPos + getBrickWidth(),
-                yPos,
-                BOARD_DEPTH / 2
-        );
-        return grid[y][x] = b;
-    }
-
-    int getWidth() const {
-        return width;
-    }
-
-    int getHeight() const {
-        return height;
-    }
-
-    // Estagio concluido - tijolos quebrados
-    bool isFinished() {
-        for (int i = 0; i < height; ++i)
-            for (int j = 0; j < width; ++j)
-                if (grid[i][j].health) return false;
-        return true;
-    }
-
-};
-
 void initLight(int width, int height) {
     glEnable(GL_LIGHTING);
     glEnable(GL_LIGHT0);
@@ -262,69 +127,29 @@ void glNormalv(vertex v) {
     glNormal3f(v.x, v.y, v.z);
 }
 
+void glVertexv(vertex v) {
+    glVertex3f(v.x, v.y, v.z);
+}
+
 /// gera numero aleatorio entre 0 e 1
 float gameRandom() {
     return 1.0 / (float) RAND_MAX * (float) rand();
 }
 
+float shouldRenderFrame() {
+    float t, frameTime;
+    static float tLast = 0.0;
+    // Get elapsed time
+    t = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
+    // Calculate frame time
+    frameTime = t - tLast;
 
-void coolCube(float size) {
-    glutSolidCube(size);
-    setColor(0);
-    glutWireCube(size * 1.001);
+    // Check if the desired frame time was achieved. If not, skip animation.
+    if (frameTime <= 1.0 / FPS)
+        return 0;
+
+    tLast = t;
+
+    return frameTime;
 }
-
-
-void maxSolidCurve(float width, float height, int slices, float depth = BOARD_DEPTH) {
-    float SLICE_RADIUS = 180.0 / slices;
-
-    vertex rotation(-1, 0), aux;
-    glPushMatrix();
-    glTranslatef(0, 0, -BOARD_DEPTH * 0.5);
-    glBegin(GL_QUAD_STRIP);
-    for (int i = 0; i < slices + 1; ++i) {
-        glNormalv(rotateVertexAngle(rotation, SLICE_RADIUS / 2));
-        glVertex3f(
-                width / 2 * rotation.x,
-                height * rotation.y,
-                0);
-
-        glVertex3f(
-                width / 2 * rotation.x,
-                height * rotation.y,
-                depth
-        );
-        rotation = rotateVertexAngle(rotation, -SLICE_RADIUS);
-    }
-    // backface
-    glNormal3f(0, -1, 0);
-    glVertex3f(-width / 2, 0, 0);
-    glVertex3f(-width / 2, 0, depth);
-    glEnd();
-
-    rotation = vertex(-1, 0);
-    for (int i = 0; i < slices; ++i) {
-        aux = rotateVertexAngle(rotation, -SLICE_RADIUS);
-        for (int j = 0; j < 2; ++j) {
-            glBegin(GL_QUAD_STRIP);
-            glNormal3f(0, 0, -1);
-            glVertex3f(width / 2 * rotation.x, 0, j * depth);
-
-            glVertex3f(
-                    width / 2 * rotation.x,
-                    height * rotation.y,
-                    j * depth);
-
-            glVertex3f(width / 2 * aux.x, 0, j * depth);
-            glVertex3f(
-                    width / 2 * aux.x,
-                    height * aux.y,
-                    j * depth);
-            glEnd();
-        }
-        rotation = aux;
-    }
-    glPopMatrix();
-}
-
 
