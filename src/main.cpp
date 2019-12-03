@@ -176,6 +176,12 @@ void init(void) {
     initLight(width, height); // Função extra para tratar iluminação.
     setPerspective();
 
+    glEnable(GL_ALPHA_TEST);      // O alpha test descarta fragmentos dependendo de uma comparação (abaixo)
+    glAlphaFunc(GL_GREATER, 0.1); // Info: https://www.opengl.org/sdk/docs/man2/xhtml/glAlphaFunc.xml
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // https://www.opengl.org/sdk/docs/man/html/glBlendFunc.xhtml
+
     textureManager.SetNumberOfTextures(7);
     textureManager.SetWrappingMode(GL_REPEAT);
     textureManager.CreateTexture("../assets/textures/skybox.png", TEX_SKYBOX);
